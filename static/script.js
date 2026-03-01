@@ -29,6 +29,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const rawText = document.getElementById('raw-text');
     const errorMessage = document.getElementById('error-message');
 
+    // Auth Banner
+    const authBanner = document.getElementById('auth-banner');
+    const authIcon = document.getElementById('auth-icon');
+    const authStatus = document.getElementById('auth-status');
+    const authReason = document.getElementById('auth-reason');
+
     let currentFile = null;
 
     // --- File Selection & Drag-Drop ---
@@ -138,6 +144,27 @@ document.addEventListener('DOMContentLoaded', () => {
             resRef.textContent = result.data.reference_no || 'N/A';
             resSender.textContent = result.data.sender || 'N/A';
             rawText.textContent = result.raw_text || 'No text extracted.';
+
+            // Populate Verification Banner
+            if (result.verification) {
+                authBanner.style.display = 'flex';
+                authBanner.className = 'auth-banner'; // reset classes
+
+                if (result.verification.is_authentic) {
+                    authBanner.classList.add('auth-authentic');
+                    authIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+                    authStatus.textContent = 'Authentic Slip';
+                    authStatus.style.color = 'var(--success)';
+                } else {
+                    authBanner.classList.add('auth-fake');
+                    authIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+                    authStatus.textContent = 'Suspected Fake or Invalid';
+                    authStatus.style.color = 'var(--danger)';
+                }
+                authReason.textContent = result.verification.reason || '';
+            } else {
+                authBanner.style.display = 'none';
+            }
 
             // Show Results
             loader.classList.add('hidden');

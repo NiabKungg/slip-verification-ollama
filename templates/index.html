@@ -63,8 +63,16 @@
 
                 <div class="data-view hidden" id="data-view">
                     <div class="result-header">
-                        <h3><i class="fa-solid fa-circle-check text-success me-2"></i> Verification Complete</h3>
+                        <h3><i class="fa-solid fa-file-invoice text-primary me-2"></i> Scan Results</h3>
                         <button class="btn btn-outline-sm" id="new-scan-btn">New Scan</button>
+                    </div>
+
+                    <div class="auth-banner" id="auth-banner" style="display: none;">
+                        <div class="auth-icon" id="auth-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                        <div class="auth-content">
+                            <h4 id="auth-status">Authenticity Status</h4>
+                            <p id="auth-reason" class="small">Checking...</p>
+                        </div>
                     </div>
 
                     <div class="data-cards">

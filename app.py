@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 import os
 from werkzeug.utils import secure_filename
-from verify_slip import extract_slip_data_with_ollama
+from verify_slip import verify_slip_image
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -30,11 +30,16 @@ def verify_slip():
         
         try:
             # We use llama3.2-vision as default
-            parsed_data, raw_response = extract_slip_data_with_ollama(filepath)
+            verification_result, raw_response = verify_slip_image(filepath)
             
             return jsonify({
                 "status": "success",
-                "data": parsed_data,
+                "verification": {
+                    "is_authentic": verification_result["is_authentic"],
+                    "reason": verification_result["reason"],
+                    "qr_payload": verification_result["qr_payload"]
+                },
+                "data": verification_result["data"],
                 "raw_text": raw_response # Maintaining the old key for backwards compatibility
             })
         except Exception as e:

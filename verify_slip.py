@@ -4,6 +4,23 @@ import os
 import base64
 import requests
 import json
+import re
+from PIL import Image
+from pyzbar.pyzbar import decode
+
+def extract_qr_payload(image_path):
+    """
+    Extract payload from the QR code in the image.
+    """
+    try:
+        img = Image.open(image_path)
+        decoded_objects = decode(img)
+        if decoded_objects:
+            return decoded_objects[0].data.decode('utf-8')
+        return None
+    except Exception as e:
+        print(f"Error reading QR code: {e}")
+        return None
 
 def encode_image_to_base64(image_path):
     with open(image_path, "rb") as image_file:
@@ -64,6 +81,62 @@ If you cannot find a specific field, return null for that field. Do not include 
     except Exception as e:
         raise Exception(f"An unexpected error occurred: {str(e)}")
 
+def verify_slip_image(image_path, model="llama3.2-vision"):
+    """
+    Full verification flow: read QR code, read text with Ollama, cross-check reference numbers.
+    """
+    qr_payload = extract_qr_payload(image_path)
+    
+    # Even if QR code is not found, we might still want the data from Ollama,
+    # but the slip is likely fake or incomplete. Let's still extract using Ollama for logging/info.
+    try:
+        parsed_data, raw_text = extract_slip_data_with_ollama(image_path, model)
+    except Exception as e:
+        if not qr_payload:
+            return {
+                "is_authentic": False,
+                "reason": f"No QR Code found, and Ollama extraction failed: {str(e)}",
+                "qr_payload": None,
+                "data": None
+            }, ""
+        raise e
+        
+    if not qr_payload:
+        return {
+            "is_authentic": False,
+            "reason": "QR Code not found or unreadable. Suspected fake or incomplete slip.",
+            "qr_payload": None,
+            "data": parsed_data
+        }, raw_text
+
+    reference_no = parsed_data.get("reference_no")
+    if not reference_no:
+        return {
+            "is_authentic": False,
+            "reason": "Reference Number not found by OCR. Cannot cross-check.",
+            "qr_payload": qr_payload,
+            "data": parsed_data
+        }, raw_text
+        
+    # Clean up strings for comparison
+    clean_ref = re.sub(r'[^a-zA-Z0-9]', '', str(reference_no)).lower()
+    clean_qr = re.sub(r'[^a-zA-Z0-9]', '', str(qr_payload)).lower()
+    
+    # The reference number from OCR should be entirely contained within the QR payload
+    if clean_ref and clean_ref in clean_qr:
+        is_authentic = True
+        reason = "Reference Number matches QR Code payload."
+    else:
+        is_authentic = False
+        reason = "Reference Number does NOT match QR Code payload. Suspected fake slip."
+        
+    return {
+        "is_authentic": is_authentic,
+        "reason": reason,
+        "qr_payload": qr_payload,
+        "data": parsed_data
+    }, raw_text
+
 def main():
     parser = argparse.ArgumentParser(description="Slip Verification Tool using Ollama")
     parser.add_argument("image_path", help="Path to the slip image file")
@@ -75,12 +148,20 @@ def main():
         sys.exit(1)
 
     try:
-        print(f"Extracting data using Ollama model '{args.model}'...")
-        parsed_data, raw_response = extract_slip_data_with_ollama(args.image_path, args.model)
+        print(f"Verifying slip using QR Code cross-check and Ollama model '{args.model}'...")
+        verification_result, raw_response = verify_slip_image(args.image_path, args.model)
+        
+        print("\n--- Verification Result ---")
+        print(f"Authentic: {verification_result['is_authentic']}")
+        print(f"Reason:    {verification_result['reason']}")
+        print(f"QR Payload:{verification_result['qr_payload']}")
         
         print("\n--- Extracted Information ---")
-        for key, value in parsed_data.items():
-            print(f"{key.capitalize()}: {value}")
+        if verification_result['data']:
+            for key, value in verification_result['data'].items():
+                print(f"{key.capitalize()}: {value}")
+        else:
+            print("No data extracted.")
             
     except Exception as e:
         print(f"An error occurred: {e}")

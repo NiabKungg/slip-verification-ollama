@@ -254,9 +254,52 @@ header h1 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--panel-border);
+}
+
+/* Auth Banner */
+.auth-banner {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.auth-authentic {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.auth-authentic .auth-icon {
+    color: var(--success);
+}
+
+.auth-fake {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.auth-fake .auth-icon {
+    color: var(--danger);
+}
+
+.auth-icon {
+    font-size: 2.25rem;
+}
+
+.auth-content h4 {
+    margin-bottom: 0.25rem;
+    font-size: 1.15rem;
+}
+
+.auth-content p {
+    color: var(--text-muted);
+    margin: 0;
 }
 
 .data-cards {
