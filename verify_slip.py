@@ -122,6 +122,12 @@ def verify_slip_image(image_path, model="llama3.2-vision"):
     clean_ref = re.sub(r'[^a-zA-Z0-9]', '', str(reference_no)).lower()
     clean_qr = re.sub(r'[^a-zA-Z0-9]', '', str(qr_payload)).lower()
     
+    # Normalize visually similar characters to handle OCR inaccuracies
+    # 'l' (lowercase L) and 'i' (lowercase I) become '1'
+    # 'o' (lowercase O) becomes '0'
+    clean_ref = clean_ref.replace('l', '1').replace('i', '1').replace('o', '0')
+    clean_qr = clean_qr.replace('l', '1').replace('i', '1').replace('o', '0')
+    
     # The reference number from OCR should be entirely contained within the QR payload
     if clean_ref and clean_ref in clean_qr:
         is_authentic = True
